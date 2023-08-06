@@ -13,6 +13,8 @@ import { VueCookies } from 'vue-cookies'
 
 const app = createApp(App)
 
+app.use(ElementPlus)
+
 app.use(router)
 
 app.mount('#app')

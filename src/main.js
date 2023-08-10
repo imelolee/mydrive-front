@@ -8,7 +8,7 @@ import "element-plus/dist/index.css";
 import "@/assets/icon/iconfont.css";
 import "@/assets/base.scss";
 
-import { VueCookies } from "vue-cookies";
+import VueCookies from "vue-cookies";
 import Dialog from "@/components/Dialog.vue";
 import Verify from "@/utils/Verify";
 import Message from "@/utils/Message";

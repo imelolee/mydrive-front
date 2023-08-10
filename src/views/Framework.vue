@@ -22,19 +22,151 @@
           </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item>アバターの変更</el-dropdown-item>
+              <el-dropdown-item>アバター変更</el-dropdown-item>
+              <el-dropdown-item>パスワード変更</el-dropdown-item>
+              <el-dropdown-item>ログアウト</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </div>
     </div>
-    <div class="body"></div>
+    <div class="body">
+      <div class="left-sider">
+        <div class="menu-list">
+          <template v-for="item in menus">
+            <div @click="jump(item)" :class="['menu-item', item.menuCode == currentMenu.menuCode ? 'active' : '',]">
+              <div :class="['iconfont', 'icon-' + item.icon]"></div>
+              <div class="text">
+                {{ item.name }}
+              </div>
+            </div>
+          </template>
+        </div>
+        <div class="menu-sub-list">
+          <div :class="['item-item-sub']" v-for="sub in currentMenu.children">
+            <span :class="['iconfont', 'icon-' + sub.icon]" v-if="sub.icon"></span>
+            <span class="text">{{ sub.name }}</span>
+          </div>
+          <div class="tips" v-if="currentMenu && currentMenu.tips">{{ currentMenu.tips }}</div>
+          <div class="space-info">
+            <div>使用スペース</div>
+            <div class="percent">
+
+            </div>
+          </div>
+        </div>
+        <div class="menu-sub-list"></div>
+      </div>
+      <div class="body-content"></div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick, onMounted } from "vue";
-const userInfo = ref({});
+import { ref, reactive, getCurrentInstance, nextTick, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+
+const { proxy } = getCurrentInstance();
+const router = useRouter();
+const route = useRoute();
+
+const userInfo = ref({
+  nickName: "user"
+});
+
+const menus = [
+  {
+    icon: "cloude",
+    name: "ホーム",
+    menuCode: "main",
+    path: "/main/all",
+    allShow: true,
+    children: [
+      {
+        icon: "all",
+        name: "全部",
+        category: "all",
+        path: "/main/all",
+      },
+      {
+        icon: "video",
+        name: "ビデオ",
+        category: "video",
+        path: "/main/video",
+      },
+      {
+        icon: "music",
+        name: "オーディオ",
+        category: "music",
+        path: "/main/music",
+      },
+      {
+        icon: "image",
+        name: "写真",
+        category: "image",
+        path: "/main/image",
+      },
+      {
+        icon: "doc",
+        name: "書類",
+        category: "doc",
+        path: "/main/doc",
+      },
+      {
+        icon: "more",
+        name: "その他",
+        category: "others",
+        path: "/main/others",
+      },
+    ],
+  },
+  {
+    path: "/myshare",
+    icon: "share",
+    name: "共有",
+    menuCode: "share",
+    allShow: true,
+    children: [
+      {
+        name: "共有記録",
+        path: "/myshare",
+      },
+    ],
+  },
+  {
+    path: "/recycle",
+    icon: "del",
+    name: "ゴミ箱",
+    menuCode: "recycle",
+    tips: "ごみ箱には、10 日以内に削除されたファイルが保存されます",
+    allShow: true,
+    children: [
+      {
+        name: "削除されたファイル",
+        path: "/recycle",
+      },
+    ],
+  },
+];
+
+const currentMenu = ref({});
+
+const jump = (data) => {
+  if (!data.path || data.menuCode == currentMenu.value.menuCode) {
+    return;
+  }
+  router.push(data.path);
+}
+
+const setMenu = (menuCode, path) => {
+
+};
+
+watch(() => route, (newVal, oldVal) => {
+  if (newVal.meta.menuCode) {
+    setMenu(newVal.meta.menuCode, newVal.path);
+  }
+}, { immediate: true, deep: true });
 </script>
 
 <style lang="scss" scoped>

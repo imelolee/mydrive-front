@@ -1,3 +1,4 @@
+@import "./font/font.css";
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -31,8 +32,9 @@
 body {
   padding: 0px;
   margin: 0px;
-  font-size: 14px;
+  font-size: 16px;
   color: #636d7e;
+  font-family: "NotoSansJP";
 }
 
 * {

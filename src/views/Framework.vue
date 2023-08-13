@@ -17,14 +17,16 @@
         </el-popover>
         <el-dropdown>
           <div class="user-info">
-            <div class="avatar"></div>
+            <div class="avatar">
+              <Avatar :userId="userInfo.userId" :avatar="userInfo.avatar" :timestamp="timestamp" :width="40"></Avatar>
+            </div>
             <span class="nick-name">{{ userInfo.nickName }}</span>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item>アバター変更</el-dropdown-item>
-              <el-dropdown-item>パスワード変更</el-dropdown-item>
-              <el-dropdown-item>ログアウト</el-dropdown-item>
+              <el-dropdown-item @click="updateAvatar">アバター変更</el-dropdown-item>
+              <el-dropdown-item @click="updatePassword">パスワード変更</el-dropdown-item>
+              <el-dropdown-item @click="logout">ログアウト</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -43,7 +45,8 @@
           </template>
         </div>
         <div class="menu-sub-list">
-          <div :class="['item-item-sub']" v-for="sub in currentMenu.children">
+          <div @click="jump(sub)" :class="['menu-item-sub', currentPath == sub.path ? 'active' : '']"
+            v-for="sub in currentMenu.children">
             <span :class="['iconfont', 'icon-' + sub.icon]" v-if="sub.icon"></span>
             <span class="text">{{ sub.name }}</span>
           </div>
@@ -55,24 +58,37 @@
             </div>
           </div>
         </div>
-        <div class="menu-sub-list"></div>
       </div>
-      <div class="body-content"></div>
+      <div class="body-content">
+        <router-view v-slot="{ Component }">
+          <component :is="Component"></component>
+        </router-view>
+      </div>
     </div>
+    <UpdateAvatar ref="updateAvatarRef" @updateAvatar="reloadAvatar"></UpdateAvatar>
+    <UpdatePassword ref="updatePasswordRef"></UpdatePassword>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import UpdateAvatar from "./UpdateAvatar.vue";
+import UpdatePassword from "./UpdatePassword.vue";
+
 
 const { proxy } = getCurrentInstance();
 const router = useRouter();
 const route = useRoute();
 
-const userInfo = ref({
-  nickName: "user"
-});
+const api = {
+  logout: "/logout",
+
+}
+
+const timestamp = ref(0);
+
+const userInfo = ref(proxy.VueCookies.get("userInfo"));
 
 const menus = [
   {
@@ -150,6 +166,7 @@ const menus = [
 ];
 
 const currentMenu = ref({});
+const currentPath = ref();
 
 const jump = (data) => {
   if (!data.path || data.menuCode == currentMenu.value.menuCode) {
@@ -159,7 +176,11 @@ const jump = (data) => {
 }
 
 const setMenu = (menuCode, path) => {
-
+  const menu = menus.find(item => {
+    return item.menuCode == menuCode;
+  })
+  currentMenu.value = menu;
+  currentPath.value = path;
 };
 
 watch(() => route, (newVal, oldVal) => {
@@ -167,6 +188,39 @@ watch(() => route, (newVal, oldVal) => {
     setMenu(newVal.meta.menuCode, newVal.path);
   }
 }, { immediate: true, deep: true });
+
+// change avatar
+const updateAvatarRef = ref();
+const updateAvatar = () => {
+  updateAvatarRef.value.show(userInfo.value);
+}
+
+const reloadAvatar = () => {
+  userInfo.value = proxy.VueCookies.get("userInfo");
+  timestamp.value = new Date().getTime();
+}
+
+// update password
+const updatePasswordRef = ref();
+const updatePassword = () => {
+  updatePasswordRef.value.show();
+}
+
+// log out
+const logout = async () => {
+  proxy.Confirm(`ログアウト?`, async () => {
+    let result = await proxy.Request({
+      url: api.logout,
+    })
+    if (!result) {
+      return;
+    }
+    proxy.VueCookies.remove("userInfo");
+    router.push("/login");
+  });
+
+}
+
 </script>
 
 <style lang="scss" scoped>

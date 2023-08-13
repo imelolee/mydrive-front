@@ -9,10 +9,14 @@ import "@/assets/icon/iconfont.css";
 import "@/assets/base.scss";
 
 import VueCookies from "vue-cookies";
+
 import Dialog from "@/components/Dialog.vue";
+import Avatar from "@/components/Avatar.vue";
+
 import Verify from "@/utils/Verify";
 import Message from "@/utils/Message";
 import Request from "@/utils/Request";
+import Confirm from "@/utils/Confirm";
 
 const app = createApp(App);
 
@@ -21,9 +25,16 @@ app.use(ElementPlus);
 app.use(router);
 
 app.component("Dialog", Dialog);
+app.component("Avatar", Avatar);
+
 app.config.globalProperties.Message = Message;
 app.config.globalProperties.Verify = Verify;
 app.config.globalProperties.Request = Request;
+app.config.globalProperties.Confirm = Confirm;
+
 app.config.globalProperties.VueCookies = VueCookies;
+app.config.globalProperties.globalInfo = {
+  avatarUrl: "/api/getAvatar/",
+};
 
 app.mount("#app");

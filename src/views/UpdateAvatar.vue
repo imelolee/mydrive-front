@@ -2,7 +2,7 @@
   <div>
     <Dialog :show="dialogConfig.show" :title="dialogConfig.title" :buttons="dialogConfig.buttons" width="500px"
       :showCancel="true" @close="dialogConfig.show = false">
-      <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
+      <el-form :model="formData" ref="formDataRef" label-width="80px" @submit.prevent>
 
         <el-form-item label="ニックネーム" prop="">
           {{ formData.nickName }}
@@ -29,9 +29,7 @@ const api = {
 
 const formData = ref({});
 const formDataRef = ref();
-const rules = {
-  title: [{ required: true, message: "内容を入力してください" }]
-}
+const emit = defineEmits();
 
 const show = (data) => {
   formData.value = Object.assign({}, data);
@@ -46,7 +44,7 @@ const dialogConfig = ref({
   title: "アバターの変更",
   buttons: [
     {
-      type: "danger",
+      type: "primary",
       text: "確認",
       click: (e) => {
         submitForm();
@@ -54,6 +52,28 @@ const dialogConfig = ref({
     },
   ],
 });
+
+const submitForm = async () => {
+  if (!(formData.value.avatar instanceof File)) {
+    dialogConfig.value.show = false;
+    return;
+  }
+  let result = await proxy.Request({
+    url: api.updateUserAvatar,
+    params: {
+      avatar: formData.value.avatar,
+    },
+  });
+  if (!result) {
+    return;
+  }
+  dialogConfig.value.show = false;
+  const cookieUserInfo = proxy.VueCookies.get("userInfo");
+  delete cookieUserInfo.avatar;
+  proxy.VueCookies.set("userInfo", cookieUserInfo, 0);
+  // Update cookies
+  emit("updateAvatar")
+};
 
 </script> 
 

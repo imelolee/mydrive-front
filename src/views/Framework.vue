@@ -25,8 +25,8 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="updateAvatar">アバター変更</el-dropdown-item>
-              <el-dropdown-item>パスワード変更</el-dropdown-item>
-              <el-dropdown-item>ログアウト</el-dropdown-item>
+              <el-dropdown-item @click="updatePassword">パスワード変更</el-dropdown-item>
+              <el-dropdown-item @click="logout">ログアウト</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -65,7 +65,8 @@
         </router-view>
       </div>
     </div>
-    <UpdateAvatar ref="updateAvatarRef"></UpdateAvatar>
+    <UpdateAvatar ref="updateAvatarRef" @updateAvatar="reloadAvatar"></UpdateAvatar>
+    <UpdatePassword ref="updatePasswordRef"></UpdatePassword>
   </div>
 </template>
 
@@ -73,10 +74,17 @@
 import { ref, reactive, getCurrentInstance, nextTick, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import UpdateAvatar from "./UpdateAvatar.vue";
+import UpdatePassword from "./UpdatePassword.vue";
+
 
 const { proxy } = getCurrentInstance();
 const router = useRouter();
 const route = useRoute();
+
+const api = {
+  logout: "/logout",
+
+}
 
 const timestamp = ref(0);
 
@@ -185,6 +193,32 @@ watch(() => route, (newVal, oldVal) => {
 const updateAvatarRef = ref();
 const updateAvatar = () => {
   updateAvatarRef.value.show(userInfo.value);
+}
+
+const reloadAvatar = () => {
+  userInfo.value = proxy.VueCookies.get("userInfo");
+  timestamp.value = new Date().getTime();
+}
+
+// update password
+const updatePasswordRef = ref();
+const updatePassword = () => {
+  updatePasswordRef.value.show();
+}
+
+// log out
+const logout = async () => {
+  proxy.Confirm(`ログアウト?`, async () => {
+    let result = await proxy.Request({
+      url: api.logout,
+    })
+    if (!result) {
+      return;
+    }
+    proxy.VueCookies.remove("userInfo");
+    router.push("/login");
+  });
+
 }
 
 </script>

@@ -123,8 +123,6 @@ const showPanel = (type) => {
 
 const checkRePassword = (rule, value, callback) => {
   if (value !== formData.value.registerPassword) {
-    console.log(value);
-    console.log(formData.value.registerPassword);
     callback(new Error(rule.message));
   } else {
     callback();

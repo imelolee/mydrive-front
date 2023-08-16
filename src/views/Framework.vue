@@ -24,7 +24,7 @@
           </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="updateAvatar">アバター変更</el-dropdown-item>
+              <el-dropdown-item @click="updateAvatar">プロフィール写真変更</el-dropdown-item>
               <el-dropdown-item @click="updatePassword">パスワード変更</el-dropdown-item>
               <el-dropdown-item @click="logout">ログアウト</el-dropdown-item>
             </el-dropdown-menu>
@@ -52,7 +52,7 @@
           </div>
           <div class="tips" v-if="currentMenu && currentMenu.tips">{{ currentMenu.tips }}</div>
           <div class="space-info">
-            <div>使用スペース</div>
+            <div>保存容量</div>
             <div class="percent">
 
             </div>

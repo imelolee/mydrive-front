@@ -10,17 +10,17 @@
             </el-button>
           </el-upload>
         </div>
-        <el-button type="success">
+        <el-button type="success" @click="newFolder">
           <span class="iconfont icon-folder-add">フォルダーを作る</span>
         </el-button>
         <el-button type="danger">
-          <span class="iconfont icon-del">削除</span>
+          <span class="iconfont icon-del">ごみ箱に移動</span>
         </el-button>
         <el-button type="warning">
           <span class="iconfont icon-move">移動</span>
         </el-button>
         <div class="search-panel">
-          <el-input clearable placeholder="ファイル名を入力してください">
+          <el-input clearable placeholder="ファイル名を検索">
             <template #suffix>
               <i class="iconfont icon-search"></i>
             </template>
@@ -43,11 +43,19 @@
               <Icon v-if="row.folderType == 0" :fileType="row.fileType"></Icon>
               <Icon v-if="row.folderType == 1" :fileType="0"></Icon>
             </template>
-            <span class="file-name" :title="row.fileName">
+            <span class="file-name" v-if="!row.showEdit" :title="row.fileName">
               <span>{{ row.fileName }}</span>
               <span v-if="row.status == 0" class="transfer-status">トランスコーディング</span>
               <span v-if="row.status == 1" class="transfer-status transfer-fail">トランスに失敗</span>
             </span>
+            <div class="edit-panel" v-show="row.showEdit">
+              <el-input v-model.trim="row.fileNameReal" ref="editNameRef" :maxLength="190"
+                @keyup.enter="saveNameEdit(index)">
+              </el-input>
+              <span :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
+                @click="saveNameEdit(index)"></span>
+              <span class="iconfont icon-error" @click="cancelNameEdit(index)"></span>
+            </div>
             <span class="op">
               <template v-if="row.showOp && row.fileId && row.status == 2">
                 <span class="iconfont icon-share1">共有</span>
@@ -58,6 +66,11 @@
               </template>
             </span>
           </div>
+        </template>
+        <template #fileSize="{ index, row }">
+          <span v-if="row.fileSize">
+            {{ proxy.Utils.size2Str(row.fileSize) }}
+          </span>
         </template>
       </Table>
     </div>
@@ -82,12 +95,12 @@ const api = {
 
 const columns = [
   {
-    label: "ファイル名",
+    label: "名前",
     prop: "fileName",
     scopedSlots: "fileName",
   },
   {
-    label: "変更時間",
+    label: "最終更新",
     prop: "lastUpdateTime",
     width: 200,
   },
@@ -140,6 +153,64 @@ const showOp = (row) => {
 
 const cancelShowOp = (row) => {
   row.showOp = false;
+}
+// edit row
+const editing = ref(false);
+const editNameRef = ref();
+
+// create new folder
+const newFolder = () => {
+  if (editing.value) {
+    return;
+  }
+  tableData.value.list.forEach(element => {
+    element.showEdit = false;
+  })
+  editing.value = true;
+  tableData.value.list.unshift({
+    showEdit: true,
+    fileType: 0,
+    fileId: "",
+    filePid: 0,
+
+  })
+  nextTick(() => {
+    editNameRef.value.focus();
+  })
+}
+
+const cancelNameEdit = (index) => {
+  const fileData = tableData.value.list[index];
+  if (fileData.fileId) {
+    fileData.showEdit = false;
+  } else {
+    tableData.value.list.splice(index, 1);
+    editing.value = false;
+  }
+
+}
+const saveNameEdit = async (index) => {
+  const { fileId, filePid, fileNameReal } = tableData.value.list[index];
+  if (fileNameReal == "" || fileNameReal.indexOf("/") != -1) {
+    proxy.Message.warning("ファイル名を空にしたり、'/'を含めたりすることはできません")
+  }
+  let url = api.rename;
+  if (fileId == "") {
+    url = api.newFoloder;
+  }
+  let result = await proxy.Request({
+    url: url,
+    params: {
+      fileId: fileId,
+      filePid: filePid,
+      fileName: fileNameReal
+    }
+  })
+  if (!result) {
+    return;
+  }
+  tableData.value.list[index] = result.data;
+  editing.value = false;
 }
 </script>
 

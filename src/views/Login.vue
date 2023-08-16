@@ -2,7 +2,7 @@
   <div class="login-body">
     <div class="login-panel">
       <el-form class="login-register" :model="formData" :rules="rules" ref="formDataRef">
-        <div class="login-title">MyDriveログイン</div>
+        <div class="login-title">ログイン</div>
         <!--email-->
         <el-form-item prop="email">
           <el-input size="large" clearable placeholder="メールアドレス" v-model.trim="formData.email" maxLength="150">
@@ -24,7 +24,7 @@
         <div v-if="opType == 0 || opType == 2">
           <!-- nickname -->
           <el-form-item prop="nickName" v-if="opType == 0">
-            <el-input size="large" clearable placeholder="ニックネーム" v-model.trim="formData.nickName" maxLength="20">
+            <el-input size="large" clearable placeholder="名前" v-model.trim="formData.nickName" maxLength="20">
               <template #prefix>
                 <span class="iconfont icon-account"></span>
               </template>
@@ -67,8 +67,8 @@
             </el-checkbox>
           </div>
           <div class="no-account">
-            <a href="javascript:void(0)" class="a-link" @click="showPanel(2)">パスワードが分からない</a>
-            <a href="javascript:void(0)" class="a-link" @click="showPanel(0)">新規会員登録へ</a>
+            <a href="javascript:void(0)" class="a-link" @click="showPanel(2)">パスワードを忘れた場合</a>
+            <a href="javascript:void(0)" class="a-link" @click="showPanel(0)">アカウントを作成</a>
           </div>
         </el-form-item>
         <el-form-item v-if="opType == 0">

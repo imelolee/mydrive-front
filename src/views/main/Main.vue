@@ -48,9 +48,10 @@
               <span v-if="row.status == 0" class="transfer-status">トランスコーディング</span>
               <span v-if="row.status == 1" class="transfer-status transfer-fail">トランスに失敗</span>
             </span>
-            <div class="edit-panel" v-show="row.showEdit">
+            <div class="edit-panel" v-if="row.showEdit">
               <el-input v-model.trim="row.fileNameReal" ref="editNameRef" :maxLength="190"
                 @keyup.enter="saveNameEdit(index)">
+                <template #suffix>{{ row.fileSuffix }}</template>
               </el-input>
               <span :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
                 @click="saveNameEdit(index)"></span>
@@ -61,7 +62,7 @@
                 <span class="iconfont icon-share1">共有</span>
                 <span class="iconfont icon-download" v-if="row.folderType == 0">ダウンロード</span>
                 <span class="iconfont icon-del">削除</span>
-                <span class="iconfont icon-edit">名前を変更</span>
+                <span class="iconfont icon-edit" @click="editFileName(index)">名前を変更</span>
                 <span class="iconfont icon-move">移動</span>
               </template>
             </span>
@@ -81,6 +82,13 @@
 import { ref, reactive, getCurrentInstance, nextTick } from "vue";
 
 const { proxy } = getCurrentInstance();
+const emit = defineEmits(["addFile"])
+const addFile = (fileData) => {
+  emit("addFile", { file: fileData.file, filePid: currentFolder.value.fileId })
+}
+
+const currentFolder = ref({ fileId: 0 })
+
 const api = {
   loadDataList: "/file/loadDataList",
   rename: "/file/rename",
@@ -185,9 +193,9 @@ const cancelNameEdit = (index) => {
     fileData.showEdit = false;
   } else {
     tableData.value.list.splice(index, 1);
-    editing.value = false;
-  }
 
+  }
+  editing.value = false;
 }
 const saveNameEdit = async (index) => {
   const { fileId, filePid, fileNameReal } = tableData.value.list[index];
@@ -211,6 +219,31 @@ const saveNameEdit = async (index) => {
   }
   tableData.value.list[index] = result.data;
   editing.value = false;
+}
+
+const editFileName = async (index) => {
+  if (tableData.value.list[0].fileId == "") {
+    tableData.value.list.splice(0, 1);
+    index = index - 1;
+  }
+  tableData.value.list.forEach(element => {
+    element.showEdit = false;
+  })
+  let currentData = tableData.value.list[index];
+  currentData.showEdit = true;
+  // edit file
+  if (currentData.folderType == 0) {
+    currentData.fileNameReal = currentData.fileName.substring(0, currentData.fileName.indexOf("."));
+    currentData.fileSuffix = currentData.fileName.substring(currentData.fileName.indexOf("."))
+  } else {
+    currentData.fileNameReal = currentData.fileName;
+    currentData.fileSuffix = "";
+  }
+  editing.value = true;
+  nextTick(() => {
+    editNameRef.focus();
+  })
+
 }
 </script>
 

@@ -6,13 +6,13 @@
         <div class="name">MyDrive </div>
       </div>
       <div class="right-panel">
-        <el-popover :width="800" trigger="click" :v-model:visible="true" :offset="20" transition="none" :hide-after="0"
-          :popper-style="{ padding: '0px' }">
+        <el-popover :width="800" trigger="click" v-model:visible="showUploader" :offset="20" transition="none"
+          :hide-after="0" :popper-style="{ padding: '0px' }">
           <template #reference>
             <span class="iconfont icon-transfer"></span>
           </template>
           <template #default>
-            Default uploading...
+            <Uploader ref="uploaderRef"></Uploader>
           </template>
         </el-popover>
         <el-dropdown>
@@ -61,7 +61,8 @@
       </div>
       <div class="body-content">
         <router-view v-slot="{ Component }">
-          <component :is="Component"></component>
+          <component :is="Component" @addFile="addFile">
+          </component>
         </router-view>
       </div>
     </div>
@@ -75,6 +76,7 @@ import { ref, reactive, getCurrentInstance, nextTick, onMounted, watch } from "v
 import { useRouter, useRoute } from "vue-router";
 import UpdateAvatar from "./UpdateAvatar.vue";
 import UpdatePassword from "./UpdatePassword.vue";
+import Uploader from "@/views/main/Uploader.vue";
 
 
 const { proxy } = getCurrentInstance();
@@ -84,6 +86,15 @@ const route = useRoute();
 const api = {
   logout: "/logout",
 
+}
+
+const showUploader = ref(false);
+const uploaderRef = ref();
+const addFile = (data) => {
+  const { file, filePid } = data;
+
+  showUploader.value = true;
+  uploaderRef.value.addFile(file, filePid);
 }
 
 const timestamp = ref(0);

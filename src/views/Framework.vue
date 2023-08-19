@@ -12,7 +12,7 @@
             <span class="iconfont icon-transfer"></span>
           </template>
           <template #default>
-            <Uploader ref="uploaderRef"></Uploader>
+            <Uploader ref="uploaderRef" @uploadCallback="uploadCallbackHandler"></Uploader>
           </template>
         </el-popover>
         <el-dropdown>
@@ -95,6 +95,13 @@ const addFile = (data) => {
 
   showUploader.value = true;
   uploaderRef.value.addFile(file, filePid);
+}
+
+// upload callback
+const uploadCallbackHandler = () => {
+  nextTick(() => {
+    // TODO update user space
+  })
 }
 
 const timestamp = ref(0);

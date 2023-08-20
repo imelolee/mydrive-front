@@ -11,12 +11,12 @@
           </el-upload>
         </div>
         <el-button type="success" @click="newFolder">
-          <span class="iconfont icon-folder-add">フォルダーを作る</span>
+          <span class="iconfont icon-folder-add">新規フォルダー</span>
         </el-button>
-        <el-button type="danger">
+        <el-button type="danger" :disabled="selectFileIdList.length == 0" @click="delFileBatch">
           <span class="iconfont icon-del">ごみ箱に移動</span>
         </el-button>
-        <el-button type="warning">
+        <el-button type="warning" :disabled="selectFileIdList.length == 0" @click="moveFolderBatch">
           <span class="iconfont icon-move">移動</span>
         </el-button>
         <div class="search-panel">
@@ -48,9 +48,10 @@
               <span v-if="row.status == 0" class="transfer-status">トランスコーディング</span>
               <span v-if="row.status == 1" class="transfer-status transfer-fail">トランスに失敗</span>
             </span>
-            <div class="edit-panel" v-show="row.showEdit">
+            <div class="edit-panel" v-if="row.showEdit">
               <el-input v-model.trim="row.fileNameReal" ref="editNameRef" :maxLength="190"
                 @keyup.enter="saveNameEdit(index)">
+                <template #suffix>{{ row.fileSuffix }}</template>
               </el-input>
               <span :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
                 @click="saveNameEdit(index)"></span>
@@ -60,8 +61,8 @@
               <template v-if="row.showOp && row.fileId && row.status == 2">
                 <span class="iconfont icon-share1">共有</span>
                 <span class="iconfont icon-download" v-if="row.folderType == 0">ダウンロード</span>
-                <span class="iconfont icon-del">削除</span>
-                <span class="iconfont icon-edit">名前を変更</span>
+                <span class="iconfont icon-del" @click="delFile(row)">削除</span>
+                <span class="iconfont icon-edit" @click="editFileName(index)">名前を変更</span>
                 <span class="iconfont icon-move">移動</span>
               </template>
             </span>
@@ -74,6 +75,7 @@
         </template>
       </Table>
     </div>
+    <FolderSelect ref="folderSelectRef"></FolderSelect>
   </div>
 </template>
 
@@ -81,6 +83,13 @@
 import { ref, reactive, getCurrentInstance, nextTick } from "vue";
 
 const { proxy } = getCurrentInstance();
+const emit = defineEmits(["addFile"])
+const addFile = (fileData) => {
+  emit("addFile", { file: fileData.file, filePid: currentFolder.value.fileId })
+}
+
+const currentFolder = ref({ fileId: 0 })
+
 const api = {
   loadDataList: "/file/loadDataList",
   rename: "/file/rename",
@@ -139,9 +148,14 @@ const loadDataList = async () => {
   tableData.value = result.data;
 };
 
+// multi selceted
+const selectFileIdList = ref([]);
 
-const rowSelected = () => {
-
+const rowSelected = (rows) => {
+  selectFileIdList.value = [];
+  rows.forEach(item => {
+    selectFileIdList.value.push(item.fileId)
+  })
 }
 
 const showOp = (row) => {
@@ -185,9 +199,9 @@ const cancelNameEdit = (index) => {
     fileData.showEdit = false;
   } else {
     tableData.value.list.splice(index, 1);
-    editing.value = false;
-  }
 
+  }
+  editing.value = false;
 }
 const saveNameEdit = async (index) => {
   const { fileId, filePid, fileNameReal } = tableData.value.list[index];
@@ -212,6 +226,71 @@ const saveNameEdit = async (index) => {
   tableData.value.list[index] = result.data;
   editing.value = false;
 }
+
+const editFileName = async (index) => {
+  if (tableData.value.list[0].fileId == "") {
+    tableData.value.list.splice(0, 1);
+    index = index - 1;
+  }
+  tableData.value.list.forEach(element => {
+    element.showEdit = false;
+  })
+  let currentData = tableData.value.list[index];
+  currentData.showEdit = true;
+  // edit file
+  if (currentData.folderType == 0) {
+    currentData.fileNameReal = currentData.fileName.substring(0, currentData.fileName.indexOf("."));
+    currentData.fileSuffix = currentData.fileName.substring(currentData.fileName.indexOf("."))
+  } else {
+    currentData.fileNameReal = currentData.fileName;
+    currentData.fileSuffix = "";
+  }
+  editing.value = true;
+  nextTick(() => {
+    editNameRef.focus();
+  })
+
+}
+
+const delFile = (row) => {
+  proxy.Confirm(`${row.fileName}を削除しますか？`, async () => {
+    let result = await proxy.Request({
+      url: api.delFile,
+      params: {
+        fileIds: row.fileId,
+      }
+    })
+    if (!result) {
+      return;
+    }
+    loadDataList();
+  })
+}
+
+const delFileBatch = () => {
+  if (selectFileIdList.value.length == 0) {
+    return;
+  }
+  proxy.Confirm(`削除しますか？`, async () => {
+    let result = await proxy.Request({
+      url: api.delFile,
+      params: {
+        fileIds: selectFileIdList.value.join(","),
+      }
+    })
+    if (!result) {
+      return;
+    }
+    loadDataList();
+  })
+}
+
+const folderSelectRef = ref();
+const moveFolderBatch = () => {
+  folderSelectRef.value.showFolderDialog();
+}
+
+
 </script>
 
 <style lang="scss" scoped>

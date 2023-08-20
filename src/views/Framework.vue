@@ -6,13 +6,13 @@
         <div class="name">MyDrive </div>
       </div>
       <div class="right-panel">
-        <el-popover :width="800" trigger="click" :v-model:visible="true" :offset="20" transition="none" :hide-after="0"
-          :popper-style="{ padding: '0px' }">
+        <el-popover :width="800" trigger="click" v-model:visible="showUploader" :offset="20" transition="none"
+          :hide-after="0" :popper-style="{ padding: '0px' }">
           <template #reference>
             <span class="iconfont icon-transfer"></span>
           </template>
           <template #default>
-            Default uploading...
+            <Uploader ref="uploaderRef" @uploadCallback="uploadCallbackHandler"></Uploader>
           </template>
         </el-popover>
         <el-dropdown>
@@ -61,7 +61,8 @@
       </div>
       <div class="body-content">
         <router-view v-slot="{ Component }">
-          <component :is="Component"></component>
+          <component :is="Component" @addFile="addFile">
+          </component>
         </router-view>
       </div>
     </div>
@@ -75,6 +76,7 @@ import { ref, reactive, getCurrentInstance, nextTick, onMounted, watch } from "v
 import { useRouter, useRoute } from "vue-router";
 import UpdateAvatar from "./UpdateAvatar.vue";
 import UpdatePassword from "./UpdatePassword.vue";
+import Uploader from "@/views/main/Uploader.vue";
 
 
 const { proxy } = getCurrentInstance();
@@ -86,6 +88,22 @@ const api = {
 
 }
 
+const showUploader = ref(false);
+const uploaderRef = ref();
+const addFile = (data) => {
+  const { file, filePid } = data;
+
+  showUploader.value = true;
+  uploaderRef.value.addFile(file, filePid);
+}
+
+// upload callback
+const uploadCallbackHandler = () => {
+  nextTick(() => {
+    // TODO update user space
+  })
+}
+
 const timestamp = ref(0);
 
 const userInfo = ref(proxy.VueCookies.get("userInfo"));
@@ -93,7 +111,7 @@ const userInfo = ref(proxy.VueCookies.get("userInfo"));
 const menus = [
   {
     icon: "cloude",
-    name: "ホーム",
+    name: "ファイル",
     menuCode: "main",
     path: "/main/all",
     allShow: true,
@@ -152,7 +170,7 @@ const menus = [
   {
     path: "/recycle",
     icon: "del",
-    name: "ゴミ箱",
+    name: "ごみ箱",
     menuCode: "recycle",
     tips: "ごみ箱には、10 日以内に削除されたファイルが保存されます",
     allShow: true,

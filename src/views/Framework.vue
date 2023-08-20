@@ -111,7 +111,7 @@ const userInfo = ref(proxy.VueCookies.get("userInfo"));
 const menus = [
   {
     icon: "cloude",
-    name: "ホーム",
+    name: "ファイル",
     menuCode: "main",
     path: "/main/all",
     allShow: true,
@@ -170,7 +170,7 @@ const menus = [
   {
     path: "/recycle",
     icon: "del",
-    name: "ゴミ箱",
+    name: "ごみ箱",
     menuCode: "recycle",
     tips: "ごみ箱には、10 日以内に削除されたファイルが保存されます",
     allShow: true,

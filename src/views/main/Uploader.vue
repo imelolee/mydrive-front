@@ -255,7 +255,7 @@ const uploadFile = async (uid, chunkIndex) => {
       break;
     }
   }
-
+  location.reload()
 }
 
 </script>

@@ -15,6 +15,7 @@ import Avatar from "@/components/Avatar.vue";
 import Table from "@/components/Table.vue";
 import Icon from "@/components/Icon.vue";
 import NoData from "@/components/NoData.vue";
+import FolderSelect from "@/components/FolderSelect.vue";
 
 import Verify from "@/utils/Verify";
 import Message from "@/utils/Message";
@@ -33,6 +34,7 @@ app.component("Avatar", Avatar);
 app.component("Table", Table);
 app.component("Icon", Icon);
 app.component("NoData", NoData);
+app.component("FolderSelect", FolderSelect);
 
 app.config.globalProperties.Message = Message;
 app.config.globalProperties.Verify = Verify;

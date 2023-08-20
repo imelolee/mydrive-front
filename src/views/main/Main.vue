@@ -11,12 +11,12 @@
           </el-upload>
         </div>
         <el-button type="success" @click="newFolder">
-          <span class="iconfont icon-folder-add">フォルダーを作る</span>
+          <span class="iconfont icon-folder-add">新規フォルダー</span>
         </el-button>
-        <el-button type="danger">
+        <el-button type="danger" :disabled="selectFileIdList.length == 0" @click="delFileBatch">
           <span class="iconfont icon-del">ごみ箱に移動</span>
         </el-button>
-        <el-button type="warning">
+        <el-button type="warning" :disabled="selectFileIdList.length == 0" @click="moveFolderBatch">
           <span class="iconfont icon-move">移動</span>
         </el-button>
         <div class="search-panel">
@@ -61,7 +61,7 @@
               <template v-if="row.showOp && row.fileId && row.status == 2">
                 <span class="iconfont icon-share1">共有</span>
                 <span class="iconfont icon-download" v-if="row.folderType == 0">ダウンロード</span>
-                <span class="iconfont icon-del">削除</span>
+                <span class="iconfont icon-del" @click="delFile(row)">削除</span>
                 <span class="iconfont icon-edit" @click="editFileName(index)">名前を変更</span>
                 <span class="iconfont icon-move">移動</span>
               </template>
@@ -75,6 +75,7 @@
         </template>
       </Table>
     </div>
+    <FolderSelect ref="folderSelectRef"></FolderSelect>
   </div>
 </template>
 
@@ -147,9 +148,14 @@ const loadDataList = async () => {
   tableData.value = result.data;
 };
 
+// multi selceted
+const selectFileIdList = ref([]);
 
-const rowSelected = () => {
-
+const rowSelected = (rows) => {
+  selectFileIdList.value = [];
+  rows.forEach(item => {
+    selectFileIdList.value.push(item.fileId)
+  })
 }
 
 const showOp = (row) => {
@@ -245,6 +251,46 @@ const editFileName = async (index) => {
   })
 
 }
+
+const delFile = (row) => {
+  proxy.Confirm(`${row.fileName}を削除しますか？`, async () => {
+    let result = await proxy.Request({
+      url: api.delFile,
+      params: {
+        fileIds: row.fileId,
+      }
+    })
+    if (!result) {
+      return;
+    }
+    loadDataList();
+  })
+}
+
+const delFileBatch = () => {
+  if (selectFileIdList.value.length == 0) {
+    return;
+  }
+  proxy.Confirm(`削除しますか？`, async () => {
+    let result = await proxy.Request({
+      url: api.delFile,
+      params: {
+        fileIds: selectFileIdList.value.join(","),
+      }
+    })
+    if (!result) {
+      return;
+    }
+    loadDataList();
+  })
+}
+
+const folderSelectRef = ref();
+const moveFolderBatch = () => {
+  folderSelectRef.value.showFolderDialog();
+}
+
+
 </script>
 
 <style lang="scss" scoped>

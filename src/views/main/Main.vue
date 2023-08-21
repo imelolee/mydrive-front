@@ -29,7 +29,7 @@
         <div class="iconfont icon-refresh" @click="loadDataList"></div>
       </div>
       <!-- Nav -->
-      <div>すべてのファイル</div>
+      <Navigation ref="navigationRef"></Navigation>
     </div>
     <div class="file-list">
       <Table ref="dataTableRef" :columns="columns" :showPagination="true" :dataSource="tableData" :fetch="loadDataList"
@@ -44,18 +44,22 @@
               <Icon v-if="row.folderType == 1" :fileType="0"></Icon>
             </template>
             <span class="file-name" v-if="!row.showEdit" :title="row.fileName">
-              <span>{{ row.fileName }}</span>
+              <span @click="preview(row)">{{ row.fileName }}</span>
               <span v-if="row.status == 0" class="transfer-status">トランスコーディング</span>
               <span v-if="row.status == 1" class="transfer-status transfer-fail">トランスに失敗</span>
             </span>
             <div class="edit-panel" v-if="row.showEdit">
               <el-input v-model.trim="row.fileNameReal" ref="editNameRef" :maxLength="190"
-                @keyup.enter="saveNameEdit(index)">
+                @keyup.enter="saveNameEdit(index)" @input="handlerChange">
                 <template #suffix>{{ row.fileSuffix }}</template>
               </el-input>
-              <span :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
-                @click="saveNameEdit(index)"></span>
-              <span class="iconfont icon-error" @click="cancelNameEdit(index)"></span>
+              <el-button :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
+                :disabled="isRewiriteEditor.value == false">
+                <span @click="saveNameEdit(index)"></span>
+              </el-button>
+              <el-button class="iconfont icon-error" @click="cancelNameEdit(index)">
+              </el-button>
+
             </div>
             <span class="op">
               <template v-if="row.showOp && row.fileId && row.status == 2">
@@ -63,7 +67,7 @@
                 <span class="iconfont icon-download" v-if="row.folderType == 0">ダウンロード</span>
                 <span class="iconfont icon-del" @click="delFile(row)">削除</span>
                 <span class="iconfont icon-edit" @click="editFileName(index)">名前を変更</span>
-                <span class="iconfont icon-move">移動</span>
+                <span class="iconfont icon-move" @click="moveFolder">移動</span>
               </template>
             </span>
           </div>
@@ -75,7 +79,7 @@
         </template>
       </Table>
     </div>
-    <FolderSelect ref="folderSelectRef"></FolderSelect>
+    <FolderSelect ref="folderSelectRef" @folderSelect="moveFolderDone"></FolderSelect>
   </div>
 </template>
 
@@ -163,19 +167,19 @@ const showOp = (row) => {
     element.showOp = false;
   })
   row.showOp = true;
-};
+}
 
 const cancelShowOp = (row) => {
   row.showOp = false;
 }
 // edit row
-const editing = ref(false);
-const editNameRef = ref();
+const editing = ref(false)
+const editNameRef = ref()
 
 // create new folder
 const newFolder = () => {
   if (editing.value) {
-    return;
+    return
   }
   tableData.value.list.forEach(element => {
     element.showEdit = false;
@@ -193,15 +197,21 @@ const newFolder = () => {
   })
 }
 
+let isRewiriteEditor = ref(false);
+const handlerChange = (e) => {
+  console.log(isRewiriteEditor.value)
+  isRewiriteEditor.value = true;
+}
+
 const cancelNameEdit = (index) => {
   const fileData = tableData.value.list[index];
   if (fileData.fileId) {
-    fileData.showEdit = false;
+    fileData.showEdit = false
   } else {
-    tableData.value.list.splice(index, 1);
+    tableData.value.list.splice(index, 1)
 
   }
-  editing.value = false;
+  editing.value = false
 }
 const saveNameEdit = async (index) => {
   const { fileId, filePid, fileNameReal } = tableData.value.list[index];
@@ -246,8 +256,9 @@ const editFileName = async (index) => {
     currentData.fileSuffix = "";
   }
   editing.value = true;
+
   nextTick(() => {
-    editNameRef.focus();
+    editNameRef.value.focus();
   })
 
 }
@@ -286,11 +297,51 @@ const delFileBatch = () => {
 }
 
 const folderSelectRef = ref();
-const moveFolderBatch = () => {
-  folderSelectRef.value.showFolderDialog();
+
+const currentMoveFile = ref({});
+const moveFolder = (data) => {
+  currentMoveFile.value = data;
+  folderSelectRef.value.showFolderDialog(currentFolder.value.fileId)
 }
 
+const moveFolderBatch = () => {
+  currentMoveFile.value = {};
+  folderSelectRef.value.showFolderDialog(currentFolder.value.fileId);
+}
 
+const moveFolderDone = async (folderId) => {
+  // console.log(folderId);
+  if (currentFolder.value.fileId == folderId) {
+    proxy.Message.warning("ファイルを移動する必要はありません")
+    return
+  }
+  let fileIdsArray = [];
+  if (currentMoveFile.value.fileId) {
+    fileIdsArray.push(currentMoveFile.value.fileId);
+  } else {
+    fileIdsArray = fileIdsArray.concat(selectFileIdList.value);
+  }
+  let result = await proxy.Request({
+    url: api.changeFileFolder,
+    params: {
+      fileIds: fileIdsArray.join(","),
+      filePid: folderId,
+    }
+  })
+  if (!result) {
+    return;
+  }
+  loadDataList();
+}
+
+// preview
+const navigationRef = ref()
+
+const preview = (data) => {
+  if (data.folderType == 1) {
+    navigationRef.value.openFolder(data)
+  }
+}
 </script>
 
 <style lang="scss" scoped>

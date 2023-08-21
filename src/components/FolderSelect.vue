@@ -1,7 +1,8 @@
 <template>
   <div>
-    <Dialog :show="dialogConfig.show" :title="dialogConfig.title" :button="dialogConfig.buttons" width="400px"
+    <Dialog :show="dialogConfig.show" :title="dialogConfig.title" :buttons="dialogConfig.buttons" width="500px"
       :showCanel="true" @close="dialogConfig.show = false">
+
       <div class="navigation-panel"></div>
       <div class="folder-list" v-if="folderList.length > 0">
         <div class="folder-item" v-for="item in folderList" @click="selectFolder(item)">
@@ -34,7 +35,7 @@ const dialogConfig = ref({
       click: () => {
         folderSelect();
       },
-      text: "ここに移動",
+      text: "移動",
     },
   ],
 });
@@ -65,6 +66,7 @@ const close = () => {
 
 const showFolderDialog = (currentFolder) => {
   dialogConfig.value.show = true;
+  currentFileIds.value = currentFolder;
   loadAllFolder();
 };
 
@@ -73,7 +75,16 @@ defineExpose({
   close,
 });
 
+// select folder
+const selectFolder = (data) => {
 
+}
+
+// confirm selected folder
+const emit = defineEmits(["folderSelect"])
+const folderSelect = () => {
+  emit("folderSelect", filePid.value);
+}
 </script>
 
 

@@ -3,7 +3,9 @@
     <Dialog :show="dialogConfig.show" :title="dialogConfig.title" :buttons="dialogConfig.buttons" width="500px"
       :showCanel="true" @close="dialogConfig.show = false">
 
-      <div class="navigation-panel"></div>
+      <div class="navigation-panel">
+        <Navigation ref="navigationRef" @navChange="navChange" :watchPath="false"></Navigation>
+      </div>
       <div class="folder-list" v-if="folderList.length > 0">
         <div class="folder-item" v-for="item in folderList" @click="selectFolder(item)">
           <icon :fileType="0"></icon>
@@ -32,10 +34,10 @@ const dialogConfig = ref({
   buttons: [
     {
       type: "primary",
+      text: "移動",
       click: () => {
         folderSelect();
       },
-      text: "移動",
     },
   ],
 });
@@ -76,14 +78,25 @@ defineExpose({
 });
 
 // select folder
-const selectFolder = (data) => {
+const navigationRef = ref()
 
+
+const selectFolder = (data) => {
+  navigationRef.value.openFolder(data)
 }
 
 // confirm selected folder
 const emit = defineEmits(["folderSelect"])
 const folderSelect = () => {
   emit("folderSelect", filePid.value);
+}
+
+// navigation change callback
+const navChange = (data) => {
+  const { curFolder } = data
+  currentFolder.value = curFolder
+  filePid.value = curFolder.fileId
+  loadAllFolder()
 }
 </script>
 

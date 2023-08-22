@@ -34,12 +34,15 @@ const fileTypeMap = {
   2: { desc: "音楽", icon: "music" },
   3: { desc: "画像", icon: "image" },
   4: { desc: "PDF", icon: "pdf" },
-  5: { desc: "書類", icon: "word" },
+  5: { desc: "word", icon: "word" },
   6: { desc: "excel", icon: "excel" },
-  7: { desc: "txt", icon: "txt" },
-  8: { desc: "コード", icon: "code" },
-  9: { desc: "圧縮ファイル", icon: "zip" },
-  10: { desc: "その他", icon: "others" },
+  7: { desc: "ppt", icon: "ppt" },
+  8: { desc: "txt", icon: "txt" },
+  9: { desc: "コード", icon: "code" },
+  10: { desc: "圧縮ファイル", icon: "zip" },
+  11: { desc: "exe", icon: "exe" },
+  12: { desc: "その他", icon: "others" },
+
 };
 
 const getImage = () => {

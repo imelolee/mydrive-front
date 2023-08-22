@@ -61,7 +61,7 @@
       </div>
       <div class="body-content">
         <router-view v-slot="{ Component }">
-          <component :is="Component" @addFile="addFile">
+          <component ref="routerViewRef" :is="Component" @addFile="addFile">
           </component>
         </router-view>
       </div>
@@ -98,8 +98,10 @@ const addFile = (data) => {
 }
 
 // upload callback
+const routerViewRef = ref()
 const uploadCallbackHandler = () => {
   nextTick(() => {
+    routerViewRef.value.reload()
     // TODO update user space
   })
 }

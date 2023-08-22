@@ -20,20 +20,20 @@
           <span class="iconfont icon-move">移動</span>
         </el-button>
         <div class="search-panel">
-          <el-input clearable placeholder="ファイル名を検索">
+          <el-input clearable placeholder="ファイル名を検索" v-model="fileNameFuzzy" @keyup.enter="search">
             <template #suffix>
-              <i class="iconfont icon-search"></i>
+              <i class="iconfont icon-search" @click="search"></i>
             </template>
           </el-input>
         </div>
         <div class="iconfont icon-refresh" @click="loadDataList"></div>
       </div>
       <!-- Nav -->
-      <Navigation ref="navigationRef"></Navigation>
+      <Navigation ref="navigationRef" @navChange="navChange"></Navigation>
     </div>
-    <div class="file-list">
+    <div class="file-list" v-if="tableData.list && tableData.list.length > 0">
       <Table ref="dataTableRef" :columns="columns" :showPagination="true" :dataSource="tableData" :fetch="loadDataList"
-        :initFetch="true" :options="tableOptions" @rowSelected="rowSelected">
+        :initFetch="false" :options="tableOptions" @rowSelected="rowSelected">
         <template #fileName="{ index, row }">
           <div class="file-item" @mouseenter="showOp(row)" @mouseleave="cancelShowOp(row)">
             <template v-if="(row.fileType == 3 || row.fileType == 1) && row.status == 2">
@@ -50,16 +50,14 @@
             </span>
             <div class="edit-panel" v-if="row.showEdit">
               <el-input v-model.trim="row.fileNameReal" ref="editNameRef" :maxLength="190"
-                @keyup.enter="saveNameEdit(index)" @input="handlerChange">
+                @keyup.enter="saveNameEdit(index)">
                 <template #suffix>{{ row.fileSuffix }}</template>
               </el-input>
-              <el-button :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
-                :disabled="isRewiriteEditor.value == false">
-                <span @click="saveNameEdit(index)"></span>
-              </el-button>
-              <el-button class="iconfont icon-error" @click="cancelNameEdit(index)">
-              </el-button>
-
+              <span :class="[
+                'iconfont icon-right1',
+                row.fileNameReal ? '' : 'not-allow',
+              ]" @click="saveNameEdit(index)"></span>
+              <span class="iconfont icon-error" @click="cancelNameEdit(index)"></span>
             </div>
             <span class="op">
               <template v-if="row.showOp && row.fileId && row.status == 2">
@@ -79,12 +77,32 @@
         </template>
       </Table>
     </div>
+    <div class="no-data" v-else>
+      <div class="no-data-inner">
+        <Icon iconName="no_data" :width="120" fit="fill"></Icon>
+        <div class="tips">データなし</div>
+        <div class="op-list">
+          <el-upload :show-file-list="false" :with-credentials="true" :multiple="true" :http-request="addFile"
+            :accept="fileAccept">
+            <div class="op-item">
+              <Icon iconName="file" :width="60"></Icon>
+              <div class="op-text">アップロード</div>
+            </div>
+          </el-upload>
+          <div class="op-item" v-if="category == 'all'" @click="newFolder">
+            <Icon iconName="folder" :width="60"></Icon>
+            <div class="op-text">新規フォルダー</div>
+          </div>
+        </div>
+      </div>
+    </div>
     <FolderSelect ref="folderSelectRef" @folderSelect="moveFolderDone"></FolderSelect>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick } from "vue";
+import { ref, reactive, getCurrentInstance, nextTick, computed } from "vue";
+import CategoryInfo from "@/js/CategoryInfo"
 
 const { proxy } = getCurrentInstance();
 const emit = defineEmits(["addFile"])
@@ -92,7 +110,17 @@ const addFile = (fileData) => {
   emit("addFile", { file: fileData.file, filePid: currentFolder.value.fileId })
 }
 
-const currentFolder = ref({ fileId: 0 })
+// add file callback
+const reload = () => {
+  showLoading.value = false
+  loadDataList()
+}
+
+defineExpose({
+  reload,
+})
+
+const currentFolder = ref({ fileId: "0" })
 
 const api = {
   loadDataList: "/file/loadDataList",
@@ -103,7 +131,24 @@ const api = {
   changeFileFolder: "/file/changeFileFolder",
   createDownloadUrl: "/file/createDownloadUrl",
   download: "/api/file/download",
-};
+}
+
+const fileAccept = computed(() => {
+  const categoryItem = CategoryInfo[category.value]
+  return categoryItem ? categoryItem.accept : "*"
+})
+
+// file search
+const search = () => {
+  if (!fileNameFuzzy.value) {
+    currentFolder.value.fileId = "0"
+  } else {
+    currentFolder.value.fileId = ""
+  }
+  showLoading.value = true
+  loadDataList()
+  fileNameFuzzy.value = ""
+}
 
 
 const columns = [
@@ -130,6 +175,8 @@ const tableOptions = {
   selectType: "checkbox",
 };
 const fileNameFuzzy = ref();
+
+const showLoading = ref(true);
 const category = ref();
 
 const loadDataList = async () => {
@@ -137,14 +184,16 @@ const loadDataList = async () => {
     pageNo: tableData.value.pageNo,
     pageSize: tableData.value.pageSize,
     fileNameFuzzy: fileNameFuzzy.value,
-    filePid: 0,
+    filePid: currentFolder.value.fileId,
+    category: category.value,
   };
   if (params.category !== "all") {
     delete params.filePid;
   }
   let result = await proxy.Request({
     url: api.loadDataList,
-    params,
+    showLoading: showLoading.value,
+    params: params,
   });
   if (!result) {
     return;
@@ -189,18 +238,12 @@ const newFolder = () => {
     showEdit: true,
     fileType: 0,
     fileId: "",
-    filePid: 0,
+    filePid: currentFolder.value.fileId,
 
   })
   nextTick(() => {
-    editNameRef.value.focus();
+    editNameRef.value.focus()
   })
-}
-
-let isRewiriteEditor = ref(false);
-const handlerChange = (e) => {
-  console.log(isRewiriteEditor.value)
-  isRewiriteEditor.value = true;
 }
 
 const cancelNameEdit = (index) => {
@@ -312,7 +355,7 @@ const moveFolderBatch = () => {
 const moveFolderDone = async (folderId) => {
   // console.log(folderId);
   if (currentFolder.value.fileId == folderId) {
-    proxy.Message.warning("ファイルを移動する必要はありません")
+    proxy.Message.warning("")
     return
   }
   let fileIdsArray = [];
@@ -331,8 +374,12 @@ const moveFolderDone = async (folderId) => {
   if (!result) {
     return;
   }
+  folderSelectRef.value.close();
   loadDataList();
 }
+
+
+
 
 // preview
 const navigationRef = ref()
@@ -341,6 +388,13 @@ const preview = (data) => {
   if (data.folderType == 1) {
     navigationRef.value.openFolder(data)
   }
+}
+
+const navChange = (data) => {
+  const { categoryId, curFolder } = data;
+  currentFolder.value = curFolder
+  category.value = categoryId
+  loadDataList()
 }
 </script>
 

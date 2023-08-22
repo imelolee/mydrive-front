@@ -9,7 +9,7 @@
     <span v-if="folderList.length == 0" class="all-file">
       全てのファイル
     </span>
-    <span v-if="folderList.length > 0" class="link">
+    <span v-if="folderList.length > 0" class="link" @click="setCurrentFolder(-1)">
       全てのファイル
     </span>
     <template v-for="(item, index) in folderList">
@@ -49,6 +49,13 @@ const category = ref()
 const folderList = ref([])
 const currentFolder = ref({ fileId: "0" })
 
+const init = () => {
+  folderList.value = []
+  currentFolder.value = { fileId: "0" }
+  doCallback()
+
+}
+
 const openFolder = (data) => {
   const { fileId, fileName } = data
   const folder = {
@@ -60,9 +67,35 @@ const openFolder = (data) => {
   setPath()
 }
 
+// back last folder
+const backParent = () => {
+  let currentIndex = null
+  for (let i = 0; i < folderList.value.length; i++) {
+    if (folderList.value[i].fileId == currentFolder.value.fileId) {
+      currentIndex = i
+      break
+    }
+  }
+  setCurrentFolder(currentIndex - 1)
+}
+
+// click navigation bar set path
+const setCurrentFolder = (index) => {
+  if (index == -1) {
+    // return all files
+    currentFolder.value = { fileId: "0" }
+    folderList.value = []
+  } else {
+    currentFolder.value = folderList.value[index]
+    folderList.value.splice(index + 1, folderList.value.length)
+  }
+  setPath()
+}
+
 const setPath = () => {
   if (!props.watchPath) {
     // TODO unwatch router callback
+    doCallback()
     return
   }
   let pathArray = []
@@ -84,7 +117,6 @@ const getNavigationFolder = async (path) => {
   if (props.shareId) {
     url = api.getFolderInfo4Share
   }
-
   let result = await proxy.Request({
     url: url,
     showLoading: false,
@@ -100,6 +132,14 @@ const getNavigationFolder = async (path) => {
 
 }
 
+const emit = defineEmits(["navChange"])
+const doCallback = () => {
+  emit("navChange", {
+    categoryId: category.value,
+    curFolder: currentFolder.value
+  })
+}
+
 watch(() => route,
   (newVal, oldVal) => {
     if (!props.watchPath) {
@@ -111,16 +151,19 @@ watch(() => route,
     const path = newVal.query.path
     category.value = newVal.params.category
     if (path == undefined) {
-
+      init()
     } else {
-      getNavigationFolder()
+      getNavigationFolder(path)
       let pathArray = path.split("/")
       currentFolder.value = {
         fileId: pathArray[pathArray.length - 1],
       }
+      doCallback();
     }
 
   }, { immediate: true, deep: true })
+
+
 </script>
 
 <style lang="scss" scoped>

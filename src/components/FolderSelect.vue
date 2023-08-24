@@ -20,6 +20,8 @@
   </div>
 </template>
 
+
+
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick } from "vue";
 const { proxy } = getCurrentInstance();
@@ -53,14 +55,13 @@ const loadAllFolder = async () => {
     url: api.loadAllFolder,
     params: {
       filePid: filePid.value,
-      currentFileIds: currentFileIds.value,
     },
   });
   if (!result) {
     return;
   }
   folderList.value = result.data;
-};
+}
 
 const close = () => {
   dialogConfig.value.show = false;
@@ -69,6 +70,7 @@ const close = () => {
 const showFolderDialog = (currentFolder) => {
   dialogConfig.value.show = true;
   currentFileIds.value = currentFolder;
+  filePid.value = "0";
   loadAllFolder();
 };
 
@@ -82,6 +84,7 @@ const navigationRef = ref()
 
 
 const selectFolder = (data) => {
+
   navigationRef.value.openFolder(data)
 }
 

@@ -17,6 +17,8 @@ import Icon from "@/components/Icon.vue";
 import NoData from "@/components/NoData.vue";
 import FolderSelect from "@/components/FolderSelect.vue";
 import Navigation from "@/components/Navigation.vue";
+import Preview from "@/components/preview/Preview.vue";
+import Window from "@/components/Window.vue";
 
 import Verify from "@/utils/Verify";
 import Message from "@/utils/Message";
@@ -37,6 +39,8 @@ app.component("Icon", Icon);
 app.component("NoData", NoData);
 app.component("FolderSelect", FolderSelect);
 app.component("Navigation", Navigation);
+app.component("Preview", Preview);
+app.component("Window", Window);
 
 app.config.globalProperties.Message = Message;
 app.config.globalProperties.Verify = Verify;

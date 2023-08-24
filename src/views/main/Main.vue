@@ -20,7 +20,7 @@
           <span class="iconfont icon-move">移動</span>
         </el-button>
         <div class="search-panel">
-          <el-input clearable placeholder="ファイル名を検索" v-model="fileNameFuzzy" @keyup.enter="search">
+          <el-input clearable placeholder="ファイル名を検索" v-model="fileNameSearch" @keyup.enter="search">
             <template #suffix>
               <i class="iconfont icon-search" @click="search"></i>
             </template>
@@ -97,6 +97,8 @@
       </div>
     </div>
     <FolderSelect ref="folderSelectRef" @folderSelect="moveFolderDone"></FolderSelect>
+    <!-- preview -->
+    <Preview ref="previewRef"></Preview>
   </div>
 </template>
 
@@ -140,8 +142,9 @@ const fileAccept = computed(() => {
 
 // file search
 const search = () => {
-  if (!fileNameFuzzy.value) {
+  if (!fileNameSearch.value) {
     currentFolder.value.fileId = "0"
+    fileNameFuzzy.value = fileNameSearch.value
   } else {
     currentFolder.value.fileId = ""
   }
@@ -174,6 +177,9 @@ const tableOptions = {
   extHeight: 50,
   selectType: "checkbox",
 };
+
+const fileNameSearch = ref();
+
 const fileNameFuzzy = ref();
 
 const showLoading = ref(true);
@@ -198,7 +204,7 @@ const loadDataList = async () => {
   if (!result) {
     return;
   }
-  tableData.value = result.data;
+  tableData.value = result.data
 };
 
 // multi selceted
@@ -353,41 +359,49 @@ const moveFolderBatch = () => {
 }
 
 const moveFolderDone = async (folderId) => {
-  // console.log(folderId);
-  if (currentFolder.value.fileId == folderId) {
-    proxy.Message.warning("")
-    return
+  if (
+    currentMoveFile.value.filePid === folderId ||
+    currentFolder.value.fileId == folderId
+  ) {
+    proxy.Message.warning("ファイルはこのディレクトリにあるので、移動する必要はない");
+    return;
   }
-  let fileIdsArray = [];
+  let filedIdsArray = [];
   if (currentMoveFile.value.fileId) {
-    fileIdsArray.push(currentMoveFile.value.fileId);
+    filedIdsArray.push(currentMoveFile.value.fileId);
   } else {
-    fileIdsArray = fileIdsArray.concat(selectFileIdList.value);
+    filedIdsArray = filedIdsArray.concat(selectFileIdList.value);
   }
   let result = await proxy.Request({
     url: api.changeFileFolder,
     params: {
-      fileIds: fileIdsArray.join(","),
+      fileIds: filedIdsArray.join(","),
       filePid: folderId,
-    }
-  })
+    },
+  });
   if (!result) {
     return;
   }
   folderSelectRef.value.close();
   loadDataList();
-}
-
-
-
+};
 
 // preview
 const navigationRef = ref()
+const previewRef = ref()
 
 const preview = (data) => {
+  // folder
   if (data.folderType == 1) {
     navigationRef.value.openFolder(data)
+    return
   }
+  // file
+  if (data.status != 2) {
+    proxy.Message.warning("このファイルはトランスコード中であり、現在プレビューすることはできません")
+    return
+  }
+  previewRef.value.showPreview(data, 0)
 }
 
 const navChange = (data) => {

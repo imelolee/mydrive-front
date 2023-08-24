@@ -54,6 +54,15 @@
           <div class="space-info">
             <div>保存容量</div>
             <div class="percent">
+              <el-progress :percentage="Math.floor((useSpaceInfo.useSpace / useSpaceInfo.totalSpace) * 10000) / 100"
+                color="#409eff">
+              </el-progress>
+            </div>
+            <div class="space-use">
+              <div class="use">
+                {{ proxy.Utils.size2Str(useSpaceInfo.useSpace) }} /{{ proxy.Utils.size2Str(useSpaceInfo.totalSpace) }}
+              </div>
+              <div class="iconfont icon-refresh" @click="getUseSpace"> </div>
 
             </div>
           </div>
@@ -85,6 +94,7 @@ const route = useRoute();
 
 const api = {
   logout: "/logout",
+  getUseSpace: "/getUseSpace"
 
 }
 
@@ -102,7 +112,8 @@ const routerViewRef = ref()
 const uploadCallbackHandler = () => {
   nextTick(() => {
     routerViewRef.value.reload()
-    // TODO update user space
+    // update user space
+    getUseSpace()
   })
 }
 
@@ -241,6 +252,21 @@ const logout = async () => {
 
 }
 
+// use space
+const useSpaceInfo = ref({ useSpace: 0, totalSpace: 1 })
+const getUseSpace = async () => {
+  let result = await proxy.Request({
+    url: api.getUseSpace,
+    showLoading: false,
+  })
+  if (!result) {
+    return
+  }
+  useSpaceInfo.value = result.data
+
+}
+
+getUseSpace()
 </script>
 
 <style lang="scss" scoped>

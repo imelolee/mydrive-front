@@ -20,20 +20,20 @@
           <span class="iconfont icon-move">移動</span>
         </el-button>
         <div class="search-panel">
-          <el-input clearable placeholder="ファイル名を検索">
+          <el-input clearable placeholder="ファイル名を検索" v-model="fileNameSearch" @keyup.enter="search">
             <template #suffix>
-              <i class="iconfont icon-search"></i>
+              <i class="iconfont icon-search" @click="search"></i>
             </template>
           </el-input>
         </div>
         <div class="iconfont icon-refresh" @click="loadDataList"></div>
       </div>
       <!-- Nav -->
-      <div>すべてのファイル</div>
+      <Navigation ref="navigationRef" @navChange="navChange"></Navigation>
     </div>
-    <div class="file-list">
+    <div class="file-list" v-if="tableData.list && tableData.list.length > 0">
       <Table ref="dataTableRef" :columns="columns" :showPagination="true" :dataSource="tableData" :fetch="loadDataList"
-        :initFetch="true" :options="tableOptions" @rowSelected="rowSelected">
+        :initFetch="false" :options="tableOptions" @rowSelected="rowSelected">
         <template #fileName="{ index, row }">
           <div class="file-item" @mouseenter="showOp(row)" @mouseleave="cancelShowOp(row)">
             <template v-if="(row.fileType == 3 || row.fileType == 1) && row.status == 2">
@@ -44,7 +44,7 @@
               <Icon v-if="row.folderType == 1" :fileType="0"></Icon>
             </template>
             <span class="file-name" v-if="!row.showEdit" :title="row.fileName">
-              <span>{{ row.fileName }}</span>
+              <span @click="preview(row)">{{ row.fileName }}</span>
               <span v-if="row.status == 0" class="transfer-status">トランスコーディング</span>
               <span v-if="row.status == 1" class="transfer-status transfer-fail">トランスに失敗</span>
             </span>
@@ -53,8 +53,10 @@
                 @keyup.enter="saveNameEdit(index)">
                 <template #suffix>{{ row.fileSuffix }}</template>
               </el-input>
-              <span :class="['iconfont icon-right1', row.fileNameReal ? '' : 'not-allow']"
-                @click="saveNameEdit(index)"></span>
+              <span :class="[
+                'iconfont icon-right1',
+                row.fileNameReal ? '' : 'not-allow',
+              ]" @click="saveNameEdit(index)"></span>
               <span class="iconfont icon-error" @click="cancelNameEdit(index)"></span>
             </div>
             <span class="op">
@@ -63,7 +65,7 @@
                 <span class="iconfont icon-download" v-if="row.folderType == 0">ダウンロード</span>
                 <span class="iconfont icon-del" @click="delFile(row)">削除</span>
                 <span class="iconfont icon-edit" @click="editFileName(index)">名前を変更</span>
-                <span class="iconfont icon-move">移動</span>
+                <span class="iconfont icon-move" @click="moveFolder">移動</span>
               </template>
             </span>
           </div>
@@ -75,12 +77,34 @@
         </template>
       </Table>
     </div>
-    <FolderSelect ref="folderSelectRef"></FolderSelect>
+    <div class="no-data" v-else>
+      <div class="no-data-inner">
+        <Icon iconName="no_data" :width="120" fit="fill"></Icon>
+        <div class="tips">データなし</div>
+        <div class="op-list">
+          <el-upload :show-file-list="false" :with-credentials="true" :multiple="true" :http-request="addFile"
+            :accept="fileAccept">
+            <div class="op-item">
+              <Icon iconName="file" :width="60"></Icon>
+              <div class="op-text">アップロード</div>
+            </div>
+          </el-upload>
+          <div class="op-item" v-if="category == 'all'" @click="newFolder">
+            <Icon iconName="folder" :width="60"></Icon>
+            <div class="op-text">新規フォルダー</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <FolderSelect ref="folderSelectRef" @folderSelect="moveFolderDone"></FolderSelect>
+    <!-- preview -->
+    <Preview ref="previewRef"></Preview>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick } from "vue";
+import { ref, reactive, getCurrentInstance, nextTick, computed } from "vue";
+import CategoryInfo from "@/js/CategoryInfo"
 
 const { proxy } = getCurrentInstance();
 const emit = defineEmits(["addFile"])
@@ -88,7 +112,17 @@ const addFile = (fileData) => {
   emit("addFile", { file: fileData.file, filePid: currentFolder.value.fileId })
 }
 
-const currentFolder = ref({ fileId: 0 })
+// add file callback
+const reload = () => {
+  showLoading.value = false
+  loadDataList()
+}
+
+defineExpose({
+  reload,
+})
+
+const currentFolder = ref({ fileId: "0" })
 
 const api = {
   loadDataList: "/file/loadDataList",
@@ -99,7 +133,25 @@ const api = {
   changeFileFolder: "/file/changeFileFolder",
   createDownloadUrl: "/file/createDownloadUrl",
   download: "/api/file/download",
-};
+}
+
+const fileAccept = computed(() => {
+  const categoryItem = CategoryInfo[category.value]
+  return categoryItem ? categoryItem.accept : "*"
+})
+
+// file search
+const search = () => {
+  if (!fileNameSearch.value) {
+    currentFolder.value.fileId = "0"
+    fileNameFuzzy.value = fileNameSearch.value
+  } else {
+    currentFolder.value.fileId = ""
+  }
+  showLoading.value = true
+  loadDataList()
+  fileNameFuzzy.value = ""
+}
 
 
 const columns = [
@@ -125,7 +177,12 @@ const tableOptions = {
   extHeight: 50,
   selectType: "checkbox",
 };
+
+const fileNameSearch = ref();
+
 const fileNameFuzzy = ref();
+
+const showLoading = ref(true);
 const category = ref();
 
 const loadDataList = async () => {
@@ -133,19 +190,21 @@ const loadDataList = async () => {
     pageNo: tableData.value.pageNo,
     pageSize: tableData.value.pageSize,
     fileNameFuzzy: fileNameFuzzy.value,
-    filePid: 0,
+    filePid: currentFolder.value.fileId,
+    category: category.value,
   };
   if (params.category !== "all") {
     delete params.filePid;
   }
   let result = await proxy.Request({
     url: api.loadDataList,
-    params,
+    showLoading: showLoading.value,
+    params: params,
   });
   if (!result) {
     return;
   }
-  tableData.value = result.data;
+  tableData.value = result.data
 };
 
 // multi selceted
@@ -163,19 +222,19 @@ const showOp = (row) => {
     element.showOp = false;
   })
   row.showOp = true;
-};
+}
 
 const cancelShowOp = (row) => {
   row.showOp = false;
 }
 // edit row
-const editing = ref(false);
-const editNameRef = ref();
+const editing = ref(false)
+const editNameRef = ref()
 
 // create new folder
 const newFolder = () => {
   if (editing.value) {
-    return;
+    return
   }
   tableData.value.list.forEach(element => {
     element.showEdit = false;
@@ -185,23 +244,23 @@ const newFolder = () => {
     showEdit: true,
     fileType: 0,
     fileId: "",
-    filePid: 0,
+    filePid: currentFolder.value.fileId,
 
   })
   nextTick(() => {
-    editNameRef.value.focus();
+    editNameRef.value.focus()
   })
 }
 
 const cancelNameEdit = (index) => {
   const fileData = tableData.value.list[index];
   if (fileData.fileId) {
-    fileData.showEdit = false;
+    fileData.showEdit = false
   } else {
-    tableData.value.list.splice(index, 1);
+    tableData.value.list.splice(index, 1)
 
   }
-  editing.value = false;
+  editing.value = false
 }
 const saveNameEdit = async (index) => {
   const { fileId, filePid, fileNameReal } = tableData.value.list[index];
@@ -246,8 +305,9 @@ const editFileName = async (index) => {
     currentData.fileSuffix = "";
   }
   editing.value = true;
+
   nextTick(() => {
-    editNameRef.focus();
+    editNameRef.value.focus();
   })
 
 }
@@ -286,11 +346,70 @@ const delFileBatch = () => {
 }
 
 const folderSelectRef = ref();
-const moveFolderBatch = () => {
-  folderSelectRef.value.showFolderDialog();
+
+const currentMoveFile = ref({});
+const moveFolder = (data) => {
+  currentMoveFile.value = data;
+  folderSelectRef.value.showFolderDialog(currentFolder.value.fileId)
 }
 
+const moveFolderBatch = () => {
+  currentMoveFile.value = {};
+  folderSelectRef.value.showFolderDialog(currentFolder.value.fileId);
+}
 
+const moveFolderDone = async (folderId) => {
+  if (
+    currentMoveFile.value.filePid === folderId ||
+    currentFolder.value.fileId == folderId
+  ) {
+    proxy.Message.warning("ファイルはこのディレクトリにあるので、移動する必要はない");
+    return;
+  }
+  let filedIdsArray = [];
+  if (currentMoveFile.value.fileId) {
+    filedIdsArray.push(currentMoveFile.value.fileId);
+  } else {
+    filedIdsArray = filedIdsArray.concat(selectFileIdList.value);
+  }
+  let result = await proxy.Request({
+    url: api.changeFileFolder,
+    params: {
+      fileIds: filedIdsArray.join(","),
+      filePid: folderId,
+    },
+  });
+  if (!result) {
+    return;
+  }
+  folderSelectRef.value.close();
+  loadDataList();
+};
+
+// preview
+const navigationRef = ref()
+const previewRef = ref()
+
+const preview = (data) => {
+  // folder
+  if (data.folderType == 1) {
+    navigationRef.value.openFolder(data)
+    return
+  }
+  // file
+  if (data.status != 2) {
+    proxy.Message.warning("このファイルはトランスコード中であり、現在プレビューすることはできません")
+    return
+  }
+  previewRef.value.showPreview(data, 0)
+}
+
+const navChange = (data) => {
+  const { categoryId, curFolder } = data;
+  currentFolder.value = curFolder
+  category.value = categoryId
+  loadDataList()
+}
 </script>
 
 <style lang="scss" scoped>

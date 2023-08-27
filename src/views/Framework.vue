@@ -239,7 +239,7 @@ const updatePassword = () => {
 
 // log out
 const logout = async () => {
-  proxy.Confirm(`ログアウト?`, async () => {
+  proxy.Confirm(`ログアウトしますか?`, async () => {
     let result = await proxy.Request({
       url: api.logout,
     })

@@ -7,6 +7,11 @@
     <PreviewExcel :url="url" v-if="fileInfo.fileType == 6"></PreviewExcel>
     <PreviewPdf :url="url" v-if="fileInfo.fileType == 4"></PreviewPdf>
     <PreviewTxt :url="url" v-if="fileInfo.fileType == 8 || fileInfo.fileType == 9"></PreviewTxt>
+    <PreviewMusic :url="url" :fileName="fileInfo.fileName" v-if="fileInfo.fileCategory == 2"></PreviewMusic>
+    <PreviewDownload :createDownloadUrl="createDownloadUrl" :downloadUrl="downloadUrl" :fileInfo="fileInfo"
+      v-if="fileInfo.fileCategory == 5 && fileInfo.fileType != 9">
+    </PreviewDownload>
+
   </Window>
 </template>
 
@@ -18,10 +23,14 @@ import PreviewDoc from "./PreviewDoc.vue"
 import PreviewExcel from "./PreviewExcel.vue"
 import PreviewPdf from "./PreviewPdf.vue"
 import PreviewTxt from "./PreviewTxt.vue"
+import PreviewMusic from "./PreviewMusic.vue"
+import PreviewDownload from "./PreviewDownload.vue";
 
 const { proxy } = getCurrentInstance()
 
 const url = ref(null)
+const createDownloadUrl = ref(null)
+const downloadUrl = ref(null)
 const fileInfo = ref({})
 const imageViewerRef = ref()
 
@@ -54,6 +63,7 @@ const imageUrl = computed(() => {
 
 const showPreview = (data, showPart) => {
   fileInfo.value = data
+  debugger
   if (data.fileCategory == 3) {
     // image
     nextTick(() => {
@@ -62,14 +72,20 @@ const showPreview = (data, showPart) => {
   } else {
     windowShow.value = true
     let _url = FILE_URL_MAP[showPart].fileUrl
+    let _createDownloadUrl = FILE_URL_MAP[showPart].createDownloadUrl
+    let _downloadUrl = FILE_URL_MAP[showPart].downloadUrl
+
     if (data.fileCategory == 1) {
       // video
       _url = FILE_URL_MAP[showPart].videoUrl
     }
     if (showPart == 0) {
       _url = _url + "/" + data.fileId
+      _createDownloadUrl = _createDownloadUrl + "/" + data.fileId
     }
     url.value = _url
+    createDownloadUrl.value = _createDownloadUrl
+    downloadUrl.value = _downloadUrl
   }
 }
 

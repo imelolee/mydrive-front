@@ -63,7 +63,7 @@
         <el-form-item v-if="opType == 1">
           <div class="rememberme-panel">
             <el-checkbox v-model="formData.rememberMe">
-              次回から自動ログインする
+              次回から自動ログイン
             </el-checkbox>
           </div>
           <div class="no-account">

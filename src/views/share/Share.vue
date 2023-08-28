@@ -4,6 +4,8 @@
       <el-button type="primary" :disabled="selectIdList.length == 0" @click="cancelShareBatch">
         <span class="iconfont icon-cancel"></span>
         共有取消</el-button>
+      <!-- Nav -->
+      <Navigation ref="navigationRef" @navChange="navChange"></Navigation>
     </div>
     <div class="file-list">
       <Table ref="dataTableRef" :columns="columns" :dataSource="tableData" :fetch="loadDataList" :initFetch="true"
@@ -26,6 +28,9 @@
               </template>
             </span>
           </div>
+        </template>
+        <template #expireTime="{ index, row }">
+          {{ row.validType == 3 ? "" : row.expireTime }}
         </template>
       </Table>
     </div>
@@ -58,6 +63,7 @@ const columns = [
   {
     label: "無効時間",
     prop: "expireTime",
+    scopedSlots: "expireTime",
     width: 200,
   },
 
@@ -162,7 +168,6 @@ const previewRef = ref()
 
 const preview = (data) => {
   // folder
-  debugger
   if (data.folderType == 1) {
     navigationRef.value.openFolder(data)
     return

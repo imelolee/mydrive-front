@@ -102,10 +102,20 @@ const setPath = () => {
   folderList.value.forEach(item => {
     pathArray.push(item.fileId)
   })
-  router.push({
-    path: route.path,
-    query: pathArray.length == 0 ? "" : { path: pathArray.join("/") }
-  })
+
+  if (route.path.startsWith("/myshare")) {
+    router.push({
+      path: "/main/all",
+      query: pathArray.length == 0 ? "" : { path: pathArray.join("/") }
+    })
+  } else {
+    router.push({
+      path: route.path,
+      query: pathArray.length == 0 ? "" : { path: pathArray.join("/") }
+    })
+  }
+
+
 }
 
 defineExpose({

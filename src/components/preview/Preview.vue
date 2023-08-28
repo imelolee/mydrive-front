@@ -63,7 +63,6 @@ const imageUrl = computed(() => {
 
 const showPreview = (data, showPart) => {
   fileInfo.value = data
-  debugger
   if (data.fileCategory == 3) {
     // image
     nextTick(() => {

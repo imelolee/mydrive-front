@@ -51,7 +51,7 @@
         <!-- validation code -->
         <el-form-item prop="checkCode">
           <div class="check-code-panel">
-            <el-input size="large" placeholder="認証コード" v-model.trim="formData.checkCode">
+            <el-input size="large" placeholder="認証コード" v-model.trim="formData.checkCode" @keyup.enter="doSubmit">
               <template #prefix>
                 <span class="iconfont icon-checkcode"></span>
               </template>
@@ -63,7 +63,7 @@
         <el-form-item v-if="opType == 1">
           <div class="rememberme-panel">
             <el-checkbox v-model="formData.rememberMe">
-              次回から自動ログインする
+              次回から自動ログイン
             </el-checkbox>
           </div>
           <div class="no-account">

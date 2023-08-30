@@ -70,7 +70,7 @@
       </div>
       <div class="body-content">
         <router-view v-slot="{ Component }">
-          <component ref="routerViewRef" :is="Component" @addFile="addFile">
+          <component ref="routerViewRef" :is="Component" @addFile="addFile" @reload="getUseSpace">
           </component>
         </router-view>
       </div>
@@ -239,7 +239,7 @@ const updatePassword = () => {
 
 // log out
 const logout = async () => {
-  proxy.Confirm(`ログアウト?`, async () => {
+  proxy.Confirm(`ログアウトしますか?`, async () => {
     let result = await proxy.Request({
       url: api.logout,
     })
@@ -291,9 +291,9 @@ getUseSpace()
     }
 
     .name {
-      font-weight: bold;
+      font-family: "Kanit";
       margin-left: 5px;
-      font-size: 25px;
+      font-size: 30px;
       color: #05a1f5;
     }
   }

@@ -9,6 +9,9 @@ import "@/assets/icon/iconfont.css";
 import "@/assets/base.scss";
 
 import VueCookies from "vue-cookies";
+import HljsVuePlugin from "@highlightjs/vue-plugin";
+import "highlight.js/styles/atom-one-light.css";
+import "highlight.js/lib/common";
 
 import Dialog from "@/components/Dialog.vue";
 import Avatar from "@/components/Avatar.vue";
@@ -31,6 +34,7 @@ const app = createApp(App);
 app.use(ElementPlus);
 
 app.use(router);
+app.use(HljsVuePlugin);
 
 app.component("Dialog", Dialog);
 app.component("Avatar", Avatar);

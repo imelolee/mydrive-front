@@ -142,7 +142,24 @@ const addFile = async (file, filePid) => {
 }
 
 defineExpose({ addFile })
-const emit = defineEmits();
+// start uploading
+const startUpload = (uid) => {
+  let currentFile = getFileByUid(uid)
+  currentFile.pause = false
+  uploadFile(uid, currentFile.chunkIndex)
+}
+// pause uploading
+const pauseUpload = (uid) => {
+  let currentFile = getFileByUid(uid)
+  currentFile.pause = true
+}
+// delete uploading
+const delUpload = (uid, index) => {
+  delList.value.push(uid)
+  fileList.value.splice(index, 1)
+}
+
+const emit = defineEmits(["uploadCallback"]);
 
 // compute md5
 const computeMd5 = (fileItem) => {
@@ -255,7 +272,6 @@ const uploadFile = async (uid, chunkIndex) => {
       break;
     }
   }
-  location.reload()
 }
 
 </script>

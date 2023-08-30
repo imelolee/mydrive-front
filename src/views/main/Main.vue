@@ -61,11 +61,11 @@
             </div>
             <span class="op">
               <template v-if="row.showOp && row.fileId && row.status == 2">
-                <span class="iconfont icon-share1">共有</span>
-                <span class="iconfont icon-download" v-if="row.folderType == 0">ダウンロード</span>
+                <span class="iconfont icon-share1" @click="share(row)">共有</span>
+                <span class="iconfont icon-download" v-if="row.folderType == 0" @click="download(row)">ダウンロード</span>
                 <span class="iconfont icon-del" @click="delFile(row)">削除</span>
                 <span class="iconfont icon-edit" @click="editFileName(index)">名前を変更</span>
-                <span class="iconfont icon-move" @click="moveFolder">移動</span>
+                <span class="iconfont icon-move" @click="moveFolder(row)">移動</span>
               </template>
             </span>
           </div>
@@ -99,12 +99,15 @@
     <FolderSelect ref="folderSelectRef" @folderSelect="moveFolderDone"></FolderSelect>
     <!-- preview -->
     <Preview ref="previewRef"></Preview>
+    <!-- file share -->
+    <FileShare ref="shareRef"></FileShare>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick, computed } from "vue";
 import CategoryInfo from "@/js/CategoryInfo"
+import FileShare from "./ShareFile.vue"
 
 const { proxy } = getCurrentInstance();
 const emit = defineEmits(["addFile"])
@@ -144,10 +147,11 @@ const fileAccept = computed(() => {
 const search = () => {
   if (!fileNameSearch.value) {
     currentFolder.value.fileId = "0"
-    fileNameFuzzy.value = fileNameSearch.value
+
   } else {
     currentFolder.value.fileId = ""
   }
+  fileNameFuzzy.value = fileNameSearch.value
   showLoading.value = true
   loadDataList()
   fileNameFuzzy.value = ""
@@ -156,7 +160,7 @@ const search = () => {
 
 const columns = [
   {
-    label: "名前",
+    label: "ファイル名",
     prop: "fileName",
     scopedSlots: "fileName",
   },
@@ -349,13 +353,16 @@ const folderSelectRef = ref();
 
 const currentMoveFile = ref({});
 const moveFolder = (data) => {
-  currentMoveFile.value = data;
+  currentMoveFile.value = data
+  navigationRef.value.cleanFolderList()
   folderSelectRef.value.showFolderDialog(currentFolder.value.fileId)
+
 }
 
 const moveFolderBatch = () => {
-  currentMoveFile.value = {};
-  folderSelectRef.value.showFolderDialog(currentFolder.value.fileId);
+  currentMoveFile.value = {}
+  navigationRef.value.cleanFolderList()
+  folderSelectRef.value.showFolderDialog(currentFolder.value.fileId)
 }
 
 const moveFolderDone = async (folderId) => {
@@ -366,7 +373,7 @@ const moveFolderDone = async (folderId) => {
     proxy.Message.warning("ファイルはこのディレクトリにあるので、移動する必要はない");
     return;
   }
-  let filedIdsArray = [];
+  let filedIdsArray = []
   if (currentMoveFile.value.fileId) {
     filedIdsArray.push(currentMoveFile.value.fileId);
   } else {
@@ -410,6 +417,24 @@ const navChange = (data) => {
   category.value = categoryId
   loadDataList()
 }
+
+// download file
+const download = async (row) => {
+  let result = await proxy.Request({
+    url: api.createDownloadUrl + "/" + row.fileId,
+  })
+  if (!result) {
+    return
+  }
+  window.location.href = api.download + "/" + result.data
+}
+
+// share
+const shareRef = ref()
+const share = (row) => {
+  shareRef.value.show(row)
+}
+
 </script>
 
 <style lang="scss" scoped>

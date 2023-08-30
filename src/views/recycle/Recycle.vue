@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="top">
-      <el-button type="success" :disabled="selectIdList.length == 0" @click="revertBatch">
+      <el-button type="success" :disabled="selectFileIdList.length == 0" @click="revertBatch">
         <span class="iconfont icon-revert"></span>復元
       </el-button>
-      <el-button type="danger" :disabled="selectIdList.length == 0" @click="delBatch">
+      <el-button type="danger" :disabled="selectFileIdList.length == 0" @click="delBatch">
         <span class="iconfont icon-del"></span>完全に削除
       </el-button>
     </div>
@@ -36,6 +36,9 @@
             {{ proxy.Utils.size2Str(row.fileSize) }}
           </span>
         </template>
+        <template #recoveryTime="{ index, row }">
+          {{ row.recoveryTime }}
+        </template>
       </Table>
     </div>
   </div>
@@ -60,6 +63,7 @@ const columns = [
   {
     label: "削除時間",
     prop: "recoveryTime",
+    scopedSlots: "recoveryTime",
     width: 200,
   },
   {
@@ -70,7 +74,14 @@ const columns = [
   },
 ]
 
-const selectIdList = ref([])
+const selectFileIdList = ref([])
+const rowSelected = (rows) => {
+  selectFileIdList.value = [];
+  rows.forEach((item) => {
+    selectFileIdList.value.push(item.fileId);
+  })
+}
+
 const tableData = ref({})
 const tableOptions = {
   extHeight: 20,
@@ -80,19 +91,101 @@ const loadDataList = async () => {
   let params = {
     pageNo: tableData.value.pageNo,
     pageSize: tableData.value.pageSize,
-  };
+  }
   if (params.category !== "all") {
     delete params.filePid;
   }
   let result = await proxy.Request({
     url: api.loadDataList,
     params,
-  });
+  })
   if (!result) {
     return;
   }
   tableData.value = result.data;
 }
+
+const showOp = (row) => {
+  tableData.value.list.forEach(element => {
+    element.showOp = false;
+  })
+  row.showOp = true;
+}
+
+const cancelShowOp = (row) => {
+  row.showOp = false;
+}
+
+// recovery
+const revert = (row) => {
+
+  proxy.Confirm(`「${row.fileName}」を復元しますか?`, async () => {
+    let result = await proxy.Request({
+      url: api.recoverFile,
+      params: {
+        fileIds: row.fileId
+      }
+    })
+    if (!result) {
+      return
+    }
+    loadDataList()
+  })
+}
+const revertBatch = () => {
+  if (selectFileIdList.value.length == 0) {
+    return
+  }
+  proxy.Confirm(`復元しますか?`, async () => {
+    let result = await proxy.Request({
+      url: api.recoverFile,
+      params: {
+        fileIds: selectFileIdList.value.join(",")
+      }
+    })
+    if (!result) {
+      return
+    }
+    loadDataList()
+  })
+}
+
+// delete from recycle 
+const emit = defineEmits(["reload"])
+const delFile = (row) => {
+  proxy.Confirm(`「${row.fileName}」を削除しますか?`, async () => {
+    let result = await proxy.Request({
+      url: api.delFile,
+      params: {
+        fileIds: row.fileId
+      }
+    })
+    if (!result) {
+      return
+    }
+    loadDataList()
+    emit("reload")
+  })
+}
+const delBatch = () => {
+  if (selectFileIdList.value.length == 0) {
+    return
+  }
+  proxy.Confirm(`削除しますか？削除後は復元できない`, async () => {
+    let result = await proxy.Request({
+      url: api.delFile,
+      params: {
+        fileIds: selectFileIdList.value.join(",")
+      }
+    })
+    if (!result) {
+      return
+    }
+    loadDataList()
+    emit("reload")
+  })
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -103,7 +196,7 @@ const loadDataList = async () => {
 
   .file-item {
     .op {
-      width: 120px;
+      width: 200px;
     }
   }
 }

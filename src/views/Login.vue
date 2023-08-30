@@ -51,7 +51,7 @@
         <!-- validation code -->
         <el-form-item prop="checkCode">
           <div class="check-code-panel">
-            <el-input size="large" placeholder="認証コード" v-model.trim="formData.checkCode">
+            <el-input size="large" placeholder="認証コード" v-model.trim="formData.checkCode" @keyup.enter="doSubmit">
               <template #prefix>
                 <span class="iconfont icon-checkcode"></span>
               </template>

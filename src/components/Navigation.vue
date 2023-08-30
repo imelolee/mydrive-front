@@ -53,7 +53,10 @@ const init = () => {
   folderList.value = []
   currentFolder.value = { fileId: "0" }
   doCallback()
+}
 
+const cleanFolderList = () => {
+  folderList.value = []
 }
 
 const openFolder = (data) => {
@@ -119,8 +122,10 @@ const setPath = () => {
 }
 
 defineExpose({
-  openFolder
+  openFolder,
+  cleanFolderList,
 })
+
 // get current path 
 const getNavigationFolder = async (path) => {
   let url = api.getFolderInfo
@@ -155,7 +160,10 @@ watch(() => route,
     if (!props.watchPath) {
       return
     }
-    if (newVal.path.indexOf("/main") === -1) {
+    if (
+      newVal.path.indexOf("/main") === -1 &&
+      newVal.path.indexOf("/share") === -1
+    ) {
       return
     }
     const path = newVal.query.path

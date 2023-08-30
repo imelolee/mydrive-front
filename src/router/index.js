@@ -47,6 +47,16 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: "/shareCheck/:shareId",
+      name: "ShareCheck",
+      component: () => import("@/views/webshare/ShareCheck.vue"),
+    },
+    {
+      path: "/share/:shareId",
+      name: "Share",
+      component: () => import("@/views/webshare/Share.vue"),
+    },
   ],
 });
 

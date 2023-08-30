@@ -13,7 +13,7 @@
         </div>
       </div>
       <div v-else class="tips">
-        <span>{{ currentFolder.fileName }}</span>へ移動
+        <span>{{ currentFolder.fileName }}</span>移動
       </div>
     </Dialog>
 
@@ -68,11 +68,12 @@ const close = () => {
 };
 
 const showFolderDialog = (currentFolder) => {
-  dialogConfig.value.show = true;
-  currentFileIds.value = currentFolder;
-  filePid.value = "0";
-  loadAllFolder();
-};
+  dialogConfig.value.show = true
+  currentFileIds.value = currentFolder
+  filePid.value = "0"
+  loadAllFolder()
+  navigationRef.value.cleanFolderList()
+}
 
 defineExpose({
   showFolderDialog,

@@ -9,7 +9,7 @@
     <PreviewTxt :url="url" v-if="fileInfo.fileType == 8 || fileInfo.fileType == 9"></PreviewTxt>
     <PreviewMusic :url="url" :fileName="fileInfo.fileName" v-if="fileInfo.fileCategory == 2"></PreviewMusic>
     <PreviewDownload :createDownloadUrl="createDownloadUrl" :downloadUrl="downloadUrl" :fileInfo="fileInfo"
-      v-if="fileInfo.fileCategory == 5 && fileInfo.fileType != 9">
+      v-if="(fileInfo.fileCategory == 5 && fileInfo.fileType != 9) || fileInfo.fileType == 7">
     </PreviewDownload>
 
   </Window>
@@ -81,6 +81,9 @@ const showPreview = (data, showPart) => {
     if (showPart == 0) {
       _url = _url + "/" + data.fileId
       _createDownloadUrl = _createDownloadUrl + "/" + data.fileId
+    } else if (showPart == 1) {
+      _url = _url + "/" + data.shareId + "/" + data.fileId
+      _createDownloadUrl = _createDownloadUrl + "/" + data.shareId + "/" + data.fileId
     }
     url.value = _url
     createDownloadUrl.value = _createDownloadUrl

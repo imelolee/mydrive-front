@@ -12,8 +12,8 @@
 </template>
 
 <script setup>
-import APlayer from "APlayer"
-import "Aplayer/dist/Aplayer.min.css"
+import APlayer from "aplayer"
+import "aplayer/dist/APlayer.min.css"
 import { ref, reactive, getCurrentInstance, nextTick, onMounted, onUnmounted } from "vue"
 const { proxy } = getCurrentInstance()
 
